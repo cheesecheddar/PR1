@@ -3,19 +3,13 @@ from tkinter import scrolledtext
 import shlex
 
 class ShellEmulator:
-    def __init__(self, root):# конструктор
+    def __init__(self, root, script_path=None):# конструктор
         self.root = root
         self.root.title("UnixEmulatorV1 — -zsh 800x500 — [cheese_cheddar@Noutbuk-Maksim-2]")
         self.root.geometry("800x500")
         # GUI:
         # поле вывода
-        self.output = scrolledtext.ScrolledText(
-            root,
-            wrap=tk.WORD,
-            state='disabled',
-            font=("Menlo", 10),
-            bg="#000" # чёрный фон
-        )
+        self.output = scrolledtext.ScrolledText(root,wrap=tk.WORD,state='disabled',font=("Menlo", 10),bg="#000")# чёрный фон
         self.output.pack(expand=True, fill='both', padx=5, pady=5)
 
         # поле ввода
@@ -34,6 +28,8 @@ class ShellEmulator:
         # Приветствие
         self.print_output("You are using emulator of the Unix-system-v1\n")
         self.print_output("Enter command: ls, cd, exit\n\n")
+        if script_path:
+            self.run_script(script_path)
 
     def print_output(self, text):
         self.output.config(state='normal') # разрешаем изменение для добавления текста
@@ -42,15 +38,16 @@ class ShellEmulator:
         self.output.see(tk.END) # прокрутка
 
     def execute_command(self, event=None):
-        command_line = self.entry.get().strip() # получаем ввод
-        if not command_line: # ничего не делаем если пусто
+        command_line = self.entry.get().strip()
+        if not command_line:
             return
-
         self.print_output(f"(base) cheese_makso@Noutbuk-testEmulator $ {command_line}\n")
-        self.entry.delete(0, tk.END) # отчистка поля ввода
+        self.entry.delete(0, tk.END)
+        self._execute_command(command_line)
 
+    def _execute_command(self, command_line): #2 этап
         try:
-            tokens = shlex.split(command_line) # разбиваем по токенам
+            tokens = shlex.split(command_line)
             cmd = tokens[0]
             args = tokens[1:]
 
@@ -64,7 +61,7 @@ class ShellEmulator:
                 self.print_output(f"Unknown command: {cmd}\n")
 
         except ValueError as e:
-            self.print_output(f"Error: {e}\n")
+            self.print_output(f"Value error: {e}\n")
         except Exception as e:
             self.print_output(f"Unknown error: {e}\n")
 
@@ -74,12 +71,16 @@ class ShellEmulator:
     def stub_cd(self, args):
         self.print_output(f"[ЗАГЛУШКА] cd {args}\n")
 
-
-if __name__ == "__main__":
-    try:
-        root = tk.Tk()
-        app = ShellEmulator(root)
-        root.mainloop()
-    except Exception as err:
-        print(f"Error: {err}")
-        input("Press Enter ...")
+    def run_script(self, script_path):# 2 этап
+        try:
+            with open(script_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    # Имитируем ввод от пользователя
+                    self.print_output(f"(base) cheese_makso@Noutbuk-testEmulator $ {line}\n")
+                    # Выполняем через тот же механизм, что и GUI
+                    self._execute_command(line)
+        except Exception as e:
+            self.print_output(f"Script error (ignored): {e}\n")
