@@ -1,5 +1,9 @@
-ls /home
-cd /etc
 whoami
 cal
-exit
+ls home
+cd home/user
+ls
+cd ..
+ls
+cd ..
+ls

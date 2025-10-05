@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import scrolledtext
 import shlex
 from vfs import create_default_vfs, load_vfs_from_xml, normalize_path, is_dir, list_dir
-import os
+import getpass
+import calendar
+from datetime import datetime
 
 class ShellEmulator:
     def __init__(self, root,vfs_path=None, script_path=None):# конструктор
@@ -26,14 +28,6 @@ class ShellEmulator:
         self.entry.pack(side='left', fill='x', expand=True)
         self.entry.bind("<Return>", self.execute_command) # при нажатии Enter вызывается обработчик команды
         self.entry.focus()
-
-        # приветствие
-        self.print_output("You are using emulator of the Unix-system-v1\n")
-        self.print_output("Enter command: ls, cd, exit\n\n")
-        # скрипт
-        if script_path:
-            self.run_script(script_path)
-
         # загрузка VFS
         if vfs_path:
             try:
@@ -43,8 +37,13 @@ class ShellEmulator:
                 self.vfs = create_default_vfs()
         else:
             self.vfs = create_default_vfs()
-
         self.current_dir = "/"
+        # приветствие
+        self.print_output("You are using emulator of the Unix-system-v1\n")
+        self.print_output("Enter command: ls, cd, exit\n\n")
+        # скрипт
+        if script_path:
+            self.run_script(script_path)
 
     def print_output(self, text):
         self.output.config(state='normal') # разрешаем изменение для добавления текста
@@ -72,7 +71,10 @@ class ShellEmulator:
                 self.cmd_ls(args)
             elif cmd == "cd":
                 self.cmd_cd(args)
-            # остальные команды — ниже
+            elif cmd == "whoami":
+                self.cmd_whoami()
+            elif cmd == "cal":
+                self.cmd_cal()
             else:
                 self.print_output(f"Unknown command: {cmd}\n")
         except Exception as e:
@@ -102,6 +104,14 @@ class ShellEmulator:
                 self.print_output(f"cd: not a directory: {new_path}\n")
         except Exception as e:
             self.print_output(f"cd: {e}\n")
+
+    def cmd_whoami(self):
+        self.print_output(f"{getpass.getuser()}\n")
+
+    def cmd_cal(self):
+        now = datetime.now()
+        cal_text = calendar.TextCalendar().formatmonth(now.year, now.month)
+        self.print_output(cal_text + "\n")
 
     def run_script(self, script_path):# 2 этап
         try:
