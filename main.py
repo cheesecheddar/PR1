@@ -10,7 +10,7 @@ if __name__ == "__main__":
 
     try:
         root = tk.Tk()
-        app = ShellEmulator(root,script_path=args.script)
+        app = ShellEmulator(root, vfs_path=args.vfs, script_path=args.script)
         root.mainloop()
     except Exception as err:
         print(f"Error: {err}")

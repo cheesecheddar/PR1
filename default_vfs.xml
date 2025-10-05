@@ -1,0 +1,10 @@
+<dir name="/">
+  <dir name="home">
+    <dir name="user">
+      <file name="notes.txt">SGVsbG8gZnJvbSBkZWZhdWx0IFZGUyE=</file>
+    </dir>
+  </dir>
+  <dir name="etc">
+    <file name="motd">V2VsY29tZSB0byBFbXVsYXRvciBW</file>
+  </dir>
+</dir>

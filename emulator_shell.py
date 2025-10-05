@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import shlex
+from vfs import create_default_vfs, load_vfs_from_xml, normalize_path, is_dir, list_dir
+import os
 
 class ShellEmulator:
-    def __init__(self, root, script_path=None):# конструктор
+    def __init__(self, root,vfs_path=None, script_path=None):# конструктор
         self.root = root
         self.root.title("UnixEmulatorV1 — -zsh 800x500 — [cheese_cheddar@Noutbuk-Maksim-2]")
         self.root.geometry("800x500")
@@ -25,11 +27,24 @@ class ShellEmulator:
         self.entry.bind("<Return>", self.execute_command) # при нажатии Enter вызывается обработчик команды
         self.entry.focus()
 
-        # Приветствие
+        # приветствие
         self.print_output("You are using emulator of the Unix-system-v1\n")
         self.print_output("Enter command: ls, cd, exit\n\n")
+        # скрипт
         if script_path:
             self.run_script(script_path)
+
+        # загрузка VFS
+        if vfs_path:
+            try:
+                self.vfs = load_vfs_from_xml(vfs_path)
+            except Exception as e:
+                self.print_output(f"VFS error: {e}. Using default VFS.\n")
+                self.vfs = create_default_vfs()
+        else:
+            self.vfs = create_default_vfs()
+
+        self.current_dir = "/"
 
     def print_output(self, text):
         self.output.config(state='normal') # разрешаем изменение для добавления текста
@@ -45,31 +60,48 @@ class ShellEmulator:
         self.entry.delete(0, tk.END)
         self._execute_command(command_line)
 
-    def _execute_command(self, command_line): #2 этап
+    def _execute_command(self, cmd_line): #2 этап
         try:
-            tokens = shlex.split(command_line)
+            tokens = shlex.split(cmd_line)
             cmd = tokens[0]
             args = tokens[1:]
 
             if cmd == "exit":
                 self.root.quit()
             elif cmd == "ls":
-                self.stub_ls(args)
+                self.cmd_ls(args)
             elif cmd == "cd":
-                self.stub_cd(args)
+                self.cmd_cd(args)
+            # остальные команды — ниже
             else:
                 self.print_output(f"Unknown command: {cmd}\n")
-
-        except ValueError as e:
-            self.print_output(f"Value error: {e}\n")
         except Exception as e:
-            self.print_output(f"Unknown error: {e}\n")
+            self.print_output(f"Error: {e}\n")
 
-    def stub_ls(self, args):
-        self.print_output(f"[ЗАГЛУШКА] ls {args}\n")
+    def cmd_ls(self, args):
+        path = args[0] if args else self.current_dir
+        try:
+            path_parts = normalize_path(self.current_dir, path)
+            files = list_dir(self.vfs, path_parts)
+            self.print_output("  ".join(files) + "\n")
+        except Exception as e:
+            self.print_output(f"ls: cannot access '{path}': {e}\n")
 
-    def stub_cd(self, args):
-        self.print_output(f"[ЗАГЛУШКА] cd {args}\n")
+    def cmd_cd(self, args):
+        if not args:
+            self.current_dir = "/"
+            return
+        target = args[0]
+        try:
+            path_parts = normalize_path(self.current_dir, target)
+            # Собираем путь для отображения
+            new_path = "/" + "/".join(path_parts) if path_parts else "/"
+            if is_dir(self.vfs, path_parts):
+                self.current_dir = new_path
+            else:
+                self.print_output(f"cd: not a directory: {new_path}\n")
+        except Exception as e:
+            self.print_output(f"cd: {e}\n")
 
     def run_script(self, script_path):# 2 этап
         try:
