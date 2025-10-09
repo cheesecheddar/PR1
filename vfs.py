@@ -52,7 +52,7 @@ def get_node(vfs, path_parts):
     return node
 
 def normalize_path(current: str, target: str) -> list:
-    # нормализует путь как в UNIX: обрабатывает ., .., абсолютные/относительные пути
+    # нормализует путь: обрабатывает ., .., абсолютные/относительные пути
     # возвращает список частей (без ведущего /)
     if target.startswith("/"):
         parts = target[1:].split("/")

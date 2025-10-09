@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext
 import shlex
-from vfs import create_default_vfs, load_vfs_from_xml, normalize_path, is_dir, list_dir
+from vfs import create_default_vfs, load_vfs_from_xml, normalize_path, is_dir, list_dir, get_node
 import getpass
 import calendar
 from datetime import datetime
@@ -75,6 +75,10 @@ class ShellEmulator:
                 self.cmd_whoami()
             elif cmd == "cal":
                 self.cmd_cal()
+            elif cmd == "rmdir":
+                self.cmd_rmdir(args)
+            elif cmd == "vfs-load":
+                self.cmd_vfs_load(args)
             else:
                 self.print_output(f"Unknown command: {cmd}\n")
         except Exception as e:
@@ -112,6 +116,45 @@ class ShellEmulator:
         now = datetime.now()
         cal_text = calendar.TextCalendar().formatmonth(now.year, now.month)
         self.print_output(cal_text + "\n")
+
+    def cmd_rmdir(self, args):
+        if not args:
+            self.print_output("rmdir: missing operand\n")
+            return
+        target = args[0]
+        try:
+            path_parts = normalize_path(self.current_dir, target)
+            if not path_parts:
+                self.print_output("rmdir: cannot remove '/': Is a directory\n")
+                return
+
+            # Получаем родителя
+            parent_parts = path_parts[:-1]
+            dir_name = path_parts[-1]
+
+            parent = get_node(self.vfs, parent_parts)
+            if dir_name not in parent:
+                raise FileNotFoundError(f"No such file or directory")
+
+            target_node = parent[dir_name]
+            if isinstance(target_node, dict) and len(target_node) == 0:
+                del parent[dir_name]
+                self.print_output("")
+            else:
+                self.print_output(f"rmdir: failed to remove '{target}': Directory not empty\n")
+        except Exception as e:
+            self.print_output(f"Error: {e}\n")
+
+    def cmd_vfs_load(self, args):
+        if not args:
+            self.print_output("vfs-load: missing file path\n")
+            return
+        try:
+            self.vfs = load_vfs_from_xml(args[0])
+            self.current_dir = "/"
+            self.print_output(f"VFS reloaded from {args[0]}\n")
+        except Exception as e:
+            self.print_output(f"vfs-load error: {e}\n")
 
     def run_script(self, script_path):# 2 этап
         try:

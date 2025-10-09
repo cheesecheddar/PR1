@@ -1,7 +1,11 @@
 <dir name="/">
   <dir name="home">
     <dir name="user">
-      <file name="notes.txt">SGVsbG8gZnJvbSBkZWZhdWx0IFZGUyE=</file>
+      <dir name="docs">
+        <file name="notes.txt">SW1wb3J0YW50IG5vdGUh</file>
+        <dir name="testdir">
+        </dir>
+      </dir>
     </dir>
   </dir>
   <dir name="etc">
